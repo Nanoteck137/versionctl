@@ -40,6 +40,7 @@
             air
             go
             gopls
+            just
           ];
         };
       }
