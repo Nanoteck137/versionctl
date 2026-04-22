@@ -114,7 +114,7 @@ func ensureRepoRootOrChdir() error {
 //////////////////////////////////////////////////
 
 func readVersionFile() (string, error) {
-	data, err := os.ReadFile("VERSION")
+	data, err := os.ReadFile("version")
 	if err != nil {
 		return "", err
 	}
@@ -122,7 +122,7 @@ func readVersionFile() (string, error) {
 }
 
 func writeVersionFile(v string) error {
-	return os.WriteFile("VERSION", []byte(v+"\n"), 0644)
+	return os.WriteFile("version", []byte(v+"\n"), 0644)
 }
 
 func bump(version, part string) (string, error) {
