@@ -22,12 +22,12 @@
           version = fullVersion;
           src = ./.;
 
-          # ldflags = [
-          #   "-X github.com/nanoteck137/tunebook.Version=${version}"
-          #   "-X github.com/nanoteck137/tunebook.Commit=${self.dirtyRev or self.rev or "no-commit"}"
-          # ];
+          ldflags = [
+            "-X github.com/nanoteck137/versionctl.Version=${version}"
+            "-X github.com/nanoteck137/versionctl.Commit=${self.dirtyRev or self.rev or "no-commit"}"
+          ];
 
-          vendorHash = null;
+          vendorHash = "sha256-dtJTSJiJN2uC3yrNo6THQXhJ4spkT/RCVFES3+iabkY=";
         };
       in
       {
