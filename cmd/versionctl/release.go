@@ -13,6 +13,7 @@ import (
 var releaseCmd = &cobra.Command{
 	Use: "release",
 	Run: func(cmd *cobra.Command, args []string) {
+		version, _ := cmd.Flags().GetString("version")
 		// NOTE(patrik): versionctl release [patch|minor|major] [--dry-run] [--label <label>] [--pre-cmd \"cmd\"]
 
 		err := app.EnsureRepoRootOrChdir()
@@ -33,7 +34,7 @@ var releaseCmd = &cobra.Command{
 
 		label := ""
 
-		err = app.Release(conf, label)
+		err = app.Release(conf, version, label)
 		if err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)
@@ -42,5 +43,7 @@ var releaseCmd = &cobra.Command{
 }
 
 func init() {
+	releaseCmd.Flags().String("version", "", "force set version")
+
 	rootCmd.AddCommand(releaseCmd)
 }

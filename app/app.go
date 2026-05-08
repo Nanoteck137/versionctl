@@ -138,17 +138,25 @@ func ResolveVersion() (string, error) {
 	return fmt.Sprintf("%s-dev+%s%s", next, hash, suffix), nil
 }
 
-func Release(conf *config.Config, label string) error {
+func Release(conf *config.Config, version, label string) error {
 	part := "patch"
 
 	if isDirty() {
 		return errors.New("working tree is dirty")
 	}
 
-	latest := getLatestTag()
-	next, err := bump(latest, part)
-	if err != nil {
-		return err
+	next := version
+	if version != "" {
+		// TODO(patrik): Check version for correct format
+		next = version
+	} else {
+		var err error
+
+		latest := getLatestTag()
+		next, err = bump(latest, part)
+		if err != nil {
+			return err
+		}
 	}
 
 	if label != "" {
@@ -174,7 +182,7 @@ func Release(conf *config.Config, label string) error {
 	return nil
 
 	// Release new version
-	err = writeVersionFile(next)
+	err := writeVersionFile(next)
 	if err != nil {
 		return err
 	}
