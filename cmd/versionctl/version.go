@@ -4,19 +4,20 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/nanoteck137/versionctl"
+	"github.com/nanoteck137/versionctl/app"
 	"github.com/spf13/cobra"
 )
 
 var versionCmd = &cobra.Command{
 	Use: "version",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := versionctl.EnsureRepoRootOrChdir(); err != nil {
+		err := app.EnsureRepoRootOrChdir()
+		if err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)
 		}
 
-		v, err := versionctl.ResolveVersion()
+		v, err := app.ResolveVersion()
 		if err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)
