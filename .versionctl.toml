@@ -1,0 +1,2 @@
+pre_cmd = 'just test-build'
+push = true
