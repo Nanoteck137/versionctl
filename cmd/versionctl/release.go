@@ -28,8 +28,6 @@ var releaseCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		_ = conf
-
 		pretty.Println(conf)
 
 		label := ""

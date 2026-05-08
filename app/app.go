@@ -179,8 +179,6 @@ func Release(conf *config.Config, version, label string) error {
 		}
 	}
 
-	return nil
-
 	// Release new version
 	err := writeVersionFile(next)
 	if err != nil {
