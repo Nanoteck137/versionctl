@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kr/pretty"
 	"github.com/nanoteck137/versionctl/app"
 	"github.com/nanoteck137/versionctl/config"
 	"github.com/spf13/cobra"
@@ -27,6 +28,8 @@ var releaseCmd = &cobra.Command{
 		}
 
 		_ = conf
+
+		pretty.Println(conf)
 
 		label := ""
 
