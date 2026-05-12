@@ -155,33 +155,68 @@ func askContinue(prompt string) bool {
 	return val
 }
 
-func askPart(currentVersion string) (string, error) {
-	part := ""
+func askVersion() (string, error) {
+	var version string
 
-	patchVersion, _ := bump(currentVersion, "patch")
-	minorVersion, _ := bump(currentVersion, "minor")
-	majorVersion, _ := bump(currentVersion, "major")
-
-	form := huh.NewSelect[string]().
-		Title("What new version").
-		Options(
-			huh.NewOption("Patch ("+patchVersion+")", "patch"),
-			huh.NewOption("Minor ("+minorVersion+")", "minor"),
-			huh.NewOption("Major ("+majorVersion+")", "major"),
-			huh.NewOption("Quit", "quit"),
-		).
-		Value(&part)
+	// TODO(patrik): Validate version
+	form := huh.NewInput().
+		Title("Input new version").
+		Placeholder("ex. 1.5.2").
+		Value(&version)
 
 	err := form.Run()
 	if err != nil {
 		return "", err
 	}
 
-	if part == "quit" {
+	// TODO(patrik): Check for valid version
+
+	return version, nil
+}
+
+func askNextVersion(currentVersion string) (string, error) {
+	option := ""
+
+	// TODO(patrik): Handle error
+	patchVersion, _ := bump(currentVersion, "patch")
+	minorVersion, _ := bump(currentVersion, "minor")
+	majorVersion, _ := bump(currentVersion, "major")
+
+	form := huh.NewSelect[string]().
+		Title("Select option").
+		Options(
+			huh.NewOption("Increment Patch ("+patchVersion+")", "patch"),
+			huh.NewOption("Increment Minor ("+minorVersion+")", "minor"),
+			huh.NewOption("Increment Major ("+majorVersion+")", "major"),
+			huh.NewOption("Set Version Manually", "manual"),
+			huh.NewOption("Quit", "quit"),
+		).
+		Value(&option)
+
+	err := form.Run()
+	if err != nil {
+		return "", err
+	}
+
+	switch option {
+	case "patch":
+		return patchVersion, nil
+	case "minor":
+		return minorVersion, nil
+	case "major":
+		return majorVersion, nil
+	case "manual":
+		version, err := askVersion()
+		if err != nil {
+			return "", err
+		}
+
+		return version, nil
+	case "quit":
 		return "", errors.New("quitting")
 	}
 
-	return part, nil
+	return "", errors.New("invalid option: " + option)
 }
 
 func Release(conf *config.Config, version, label string) error {
@@ -194,12 +229,7 @@ func Release(conf *config.Config, version, label string) error {
 
 		latest := getLatestTag()
 
-		part, err := askPart(latest)
-		if err != nil {
-			return err
-		}
-
-		next, err = bump(latest, part)
+		next, err = askNextVersion(latest)
 		if err != nil {
 			return err
 		}
