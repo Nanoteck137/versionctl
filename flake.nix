@@ -27,7 +27,7 @@
             "-X github.com/nanoteck137/versionctl.Commit=${self.dirtyRev or self.rev or "no-commit"}"
           ];
 
-          vendorHash = "sha256-dtJTSJiJN2uC3yrNo6THQXhJ4spkT/RCVFES3+iabkY=";
+          vendorHash = "sha256-6PHasHDkTEXxYVaA+FFHpsISpFg8RD0w7pGqHA8CV2c=";
         };
       in
       {
