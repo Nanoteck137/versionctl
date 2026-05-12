@@ -13,8 +13,17 @@ import (
 var releaseCmd = &cobra.Command{
 	Use: "release",
 	Run: func(cmd *cobra.Command, args []string) {
+		dir, _ := cmd.Flags().GetString("dir")
 		version, _ := cmd.Flags().GetString("version")
 		// NOTE(patrik): versionctl release [patch|minor|major] [--dry-run] [--label <label>] [--pre-cmd \"cmd\"]
+
+		if dir != "" {
+			err := os.Chdir(dir)
+			if err != nil {
+				fmt.Println("Error:", err)
+				os.Exit(1)
+			}
+		}
 
 		err := app.EnsureRepoRootOrChdir()
 		if err != nil {
@@ -41,6 +50,7 @@ var releaseCmd = &cobra.Command{
 }
 
 func init() {
+	releaseCmd.Flags().String("dir", "", "dir to run the command in")
 	releaseCmd.Flags().String("version", "", "force set version")
 
 	rootCmd.AddCommand(releaseCmd)

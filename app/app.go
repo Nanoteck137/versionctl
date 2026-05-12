@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/charmbracelet/huh"
 	"github.com/nanoteck137/versionctl/config"
 )
 
@@ -122,7 +123,8 @@ func ResolveVersion() (string, error) {
 	}
 
 	latest := getLatestTag()
-	// TODO(patrik): Handle error
+	// TODO(patrik): This is wrong, we should just get the current version
+	// and not bump it
 	next, err := bump(latest, "patch")
 	if err != nil {
 		return "", err
@@ -138,14 +140,52 @@ func ResolveVersion() (string, error) {
 	return fmt.Sprintf("%s-dev+%s%s", next, hash, suffix), nil
 }
 
-func Release(conf *config.Config, version, label string) error {
-	part := "patch"
+func askContinue(prompt string) bool {
+	var val bool
 
-	if isDirty() {
-		return errors.New("working tree is dirty")
+	form := huh.NewConfirm().
+		Title(prompt).
+		Value(&val)
+
+	err := form.Run()
+	if err != nil {
+		return false
 	}
 
-	next := version
+	return val
+}
+
+func askPart(currentVersion string) (string, error) {
+	part := ""
+
+	patchVersion, _ := bump(currentVersion, "patch")
+	minorVersion, _ := bump(currentVersion, "minor")
+	majorVersion, _ := bump(currentVersion, "major")
+
+	form := huh.NewSelect[string]().
+		Title("What new version").
+		Options(
+			huh.NewOption("Patch ("+patchVersion+")", "patch"),
+			huh.NewOption("Minor ("+minorVersion+")", "minor"),
+			huh.NewOption("Major ("+majorVersion+")", "major"),
+			huh.NewOption("Quit", "quit"),
+		).
+		Value(&part)
+
+	err := form.Run()
+	if err != nil {
+		return "", err
+	}
+
+	if part == "quit" {
+		return "", errors.New("quitting")
+	}
+
+	return part, nil
+}
+
+func Release(conf *config.Config, version, label string) error {
+	next := ""
 	if version != "" {
 		// TODO(patrik): Check version for correct format
 		next = version
@@ -153,6 +193,12 @@ func Release(conf *config.Config, version, label string) error {
 		var err error
 
 		latest := getLatestTag()
+
+		part, err := askPart(latest)
+		if err != nil {
+			return err
+		}
+
 		next, err = bump(latest, part)
 		if err != nil {
 			return err
@@ -163,23 +209,28 @@ func Release(conf *config.Config, version, label string) error {
 		next = fmt.Sprintf("%s-%s", next, label)
 	}
 
-	fmt.Println("Next version:", next)
+	if isDirty() {
+		return errors.New("working tree is dirty")
+	}
 
 	// Run pre cmd
 	if conf.PreCmd != "" {
-		fmt.Println("Running pre-command:", conf.PreCmd)
+		fmt.Printf("Running pre-command '%s'\n", conf.PreCmd)
 
-		cmd := exec.Command("sh", "-c", conf.PreCmd)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		err := cmd.Run()
+		err := run("sh", "-c", conf.PreCmd)
 		if err != nil {
 			return errors.New("pre-command failed, aborting release")
 		}
 	}
 
+	fmt.Println("Next version:", next)
+
+	if !askContinue("Do you want to continue") {
+		return errors.New("abort")
+	}
+
 	// Release new version
+	fmt.Println("Writing version to 'version' file")
 	err := writeVersionFile(next)
 	if err != nil {
 		return err
@@ -190,17 +241,20 @@ func Release(conf *config.Config, version, label string) error {
 		return err
 	}
 
+	fmt.Println("Commiting version file")
 	err = run("git", "commit", "-m", "release: version "+next)
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("Tagging the new version")
 	err = run("git", "tag", next)
 	if err != nil {
 		return err
 	}
 
 	// Go back to main
+	fmt.Println("Writing 0.0.0 to 'version' file")
 	err = writeVersionFile("0.0.0")
 	if err != nil {
 		return err
@@ -211,13 +265,14 @@ func Release(conf *config.Config, version, label string) error {
 		return err
 	}
 
+	fmt.Println("Commiting version file back to 0.0.0")
 	err = run("git", "commit", "-m", "chore: back to 0.0.0")
 	if err != nil {
 		return err
 	}
 
-	// Push
-	if conf.Push {
+	// TODO(patrik): Ask the user to push
+	if askContinue("Do you want to push the commits and the new tag?") {
 		fmt.Println("Running git push")
 
 		err = run("git", "push")

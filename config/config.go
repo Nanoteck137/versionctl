@@ -13,19 +13,16 @@ import (
 
 type Config struct {
 	PreCmd string `mapstructure:"pre_cmd"`
-	Push   bool   `mapstructure:"push"`
 }
 
 func (c Config) Validate() error {
 	return validate.ValidateStruct(&c,
 		validate.Field(&c.PreCmd),
-		validate.Field(&c.Push),
 	)
 }
 
 func defaults(v *viper.Viper) {
 	v.SetDefault("pre_cmd", "")
-	v.SetDefault("push", true)
 }
 
 func WriteNewConfig() error {
